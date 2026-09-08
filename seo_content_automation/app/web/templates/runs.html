@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Pipeline Runs{% endblock %}
+{% block page_title %}Pipeline Runs{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal()">New Run</button>
+{% endblock %}
+
+{% block content %}
+{% if logs %}
+<div class="card">
+    <div class="card-header">
+        <h3>Run History ({{ logs|length }} logs)</h3>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Log File</th>
+                    <th>Last Modified</th>
+                    <th>Size</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td><a href="{{ url_for('run_detail', log_name=log.name) }}">{{ log.name }}</a></td>
+                    <td>{{ log.modified }}</td>
+                    <td>{{ (log.size / 1024)|round(1) }} KB</td>
+                    <td><a href="{{ url_for('run_detail', log_name=log.name) }}" class="btn btn-outline btn-sm">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon">&#9654;</div>
+            <p>No pipeline runs recorded yet.</p>
+            <p>Run the pipeline to generate content and see logs here.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

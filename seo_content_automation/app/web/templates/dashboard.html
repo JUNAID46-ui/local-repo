@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+<span class="badge {% if pipeline_running %}badge-success{% else %}badge-gray{% endif %}">
+    <span class="status-dot {% if pipeline_running %}running{% else %}idle{% endif %}"></span>
+    {% if pipeline_running %}Pipeline Running{% else %}Idle{% endif %}
+</span>
+<button class="btn btn-primary btn-sm" onclick="openModal()">Run Pipeline</button>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stat-primary">
+        <div class="stat-label">Active Businesses</div>
+        <div class="stat-value">{{ stats.active_businesses }}</div>
+        <div class="stat-sub">{{ stats.total_businesses }} total</div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-label">Articles Generated</div>
+        <div class="stat-value">{{ stats.total_articles }}</div>
+        <div class="stat-sub">across all businesses</div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-label">Documents</div>
+        <div class="stat-value">{{ stats.total_documents }}</div>
+        <div class="stat-sub">DOCX files</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pipeline Runs</div>
+        <div class="stat-value">{{ recent_logs|length }}</div>
+        <div class="stat-sub">recent logs</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Pipeline Runs</h3>
+            <a href="{{ url_for('runs_list') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        {% if recent_logs %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Log File</th>
+                        <th>Date</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td><a href="{{ url_for('run_detail', log_name=log.name) }}">{{ log.name }}</a></td>
+                        <td>{{ log.modified }}</td>
+                        <td>{{ (log.size / 1024)|round(1) }} KB</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">&#9654;</div>
+                <p>No pipeline runs yet. Start one using the button above.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Documents</h3>
+            <a href="{{ url_for('documents_list') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        {% if recent_outputs %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Business</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in recent_outputs %}
+                    <tr>
+                        <td><a href="{{ url_for('download_document', path=doc.abs_path) }}">{{ doc.name }}</a></td>
+                        <td>{{ doc.business }}</td>
+                        <td>{{ doc.size_kb }} KB</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">&#9783;</div>
+                <p>No documents generated yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if last_log %}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>Last Run Summary</h3>
+        <span class="badge badge-gray">{{ last_log.run_id }}</span>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Run ID</div>
+                <div class="detail-value">{{ last_log.run_id }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Duration</div>
+                <div class="detail-value">{{ last_log.duration_seconds|round(1) }} seconds</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Started</div>
+                <div class="detail-value">{{ last_log.start_time }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Completed</div>
+                <div class="detail-value">{{ last_log.end_time }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if last_log.entries %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Business</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in last_log.entries[-10:] %}
+                <tr>
+                    <td><span class="log-time">{{ entry.timestamp[11:19] }}</span></td>
+                    <td>
+                        {% if entry.event == 'error' %}
+                        <span class="badge badge-danger">{{ entry.event }}</span>
+                        {% elif entry.event == 'business_complete' %}
+                        <span class="badge badge-success">{{ entry.event }}</span>
+                        {% else %}
+                        <span class="badge badge-gray">{{ entry.event }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.get('business_name', entry.get('business_id', '')) }}</td>
+                    <td>
+                        {% if entry.get('topic') %}{{ entry.topic }} - {{ entry.status }}
+                        {% elif entry.get('error') %}{{ entry.error[:80] }}
+                        {% elif entry.get('topics_generated') is not none %}{{ entry.topics_generated }} topics, {{ entry.status }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>Businesses Overview</h3>
+        <a href="{{ url_for('businesses_list') }}" class="btn btn-outline btn-sm">Manage</a>
+    </div>
+    {% if businesses %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Business</th>
+                    <th>Industry</th>
+                    <th>Location</th>
+                    <th>Services</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in businesses %}
+                <tr>
+                    <td><a href="{{ url_for('business_detail', business_id=b.business_id) }}">{{ b.business_name }}</a></td>
+                    <td>{{ b.industry }}</td>
+                    <td>{{ b.location }}</td>
+                    <td>{{ b.services|length }}</td>
+                    <td>
+                        {% if b.active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-gray">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon">&#9733;</div>
+            <p>No businesses configured. Add businesses via Google Sheets or mock data.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

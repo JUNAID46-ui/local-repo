@@ -169,6 +169,13 @@ def start_scheduler() -> None:
         logger.info("Scheduler stopped")
 
 
+def start_web(host: str = "0.0.0.0", port: int = 5000, debug: bool = True) -> None:
+    from app.web.app import create_app
+    app = create_app()
+    logger.info(f"Starting web dashboard at http://{host}:{port}")
+    app.run(host=host, port=port, debug=debug)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="SEO Content Automation Pipeline")
     parser.add_argument("--run-now", action="store_true", help="Run pipeline immediately")
@@ -176,10 +183,14 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Dry run (topic selection only)")
     parser.add_argument("--schedule", action="store_true", help="Start the daily scheduler")
     parser.add_argument("--mock", action="store_true", help="Use mock data and agents")
+    parser.add_argument("--web", action="store_true", help="Start the web dashboard")
+    parser.add_argument("--port", type=int, default=5000, help="Web server port (default: 5000)")
 
     args = parser.parse_args()
 
-    if args.schedule:
+    if args.web:
+        start_web(port=args.port)
+    elif args.schedule:
         start_scheduler()
     elif args.run_now or args.business or args.dry_run:
         run_pipeline(

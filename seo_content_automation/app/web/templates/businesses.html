@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Businesses{% endblock %}
+{% block page_title %}Businesses{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal()">Run Pipeline</button>
+{% endblock %}
+
+{% block content %}
+{% if businesses %}
+<div class="card">
+    <div class="card-header">
+        <h3>All Businesses ({{ businesses|length }})</h3>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Business Name</th>
+                    <th>Industry</th>
+                    <th>Location</th>
+                    <th>Primary Service</th>
+                    <th>Services</th>
+                    <th>Articles</th>
+                    <th>Last Run</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in businesses %}
+                <tr>
+                    <td><a href="{{ url_for('business_detail', business_id=b.profile.business_id) }}">{{ b.profile.business_name }}</a></td>
+                    <td>{{ b.profile.industry }}</td>
+                    <td>{{ b.profile.location }}</td>
+                    <td>{{ b.profile.primary_service }}</td>
+                    <td>{{ b.profile.services|length }}</td>
+                    <td>{{ b.state.total_articles_generated }}</td>
+                    <td>{{ b.state.last_run or "Never" }}</td>
+                    <td>
+                        {% if b.profile.active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-gray">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon">&#9733;</div>
+            <p>No businesses configured.</p>
+            <p>Add businesses via your Google Sheet or use mock data with the --mock flag.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
