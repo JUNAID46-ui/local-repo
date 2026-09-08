@@ -19,6 +19,7 @@ logs/*.json
 
 data/businesses/*/research_cache.json
 data/businesses/*/content_history.json
+data/local_businesses.json
 
 .venv/
 venv/
