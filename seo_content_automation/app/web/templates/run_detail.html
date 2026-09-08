@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Run: {{ log.run_id }}{% endblock %}
+{% block page_title %}Run Details{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('runs_list') }}" class="btn btn-outline btn-sm">Back to Runs</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ log.run_id }}</h3>
+        <span class="badge badge-primary">{{ log_name }}</span>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Run ID</div>
+                <div class="detail-value"><code>{{ log.run_id }}</code></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Duration</div>
+                <div class="detail-value">{{ log.duration_seconds|round(1) }}s</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Started</div>
+                <div class="detail-value">{{ log.start_time }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Finished</div>
+                <div class="detail-value">{{ log.end_time }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if log.entries %}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>Events ({{ log.entries|length }})</h3>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Business</th>
+                    <th>Topic</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log.entries %}
+                <tr>
+                    <td><span class="log-time">{{ entry.timestamp[11:19] }}</span></td>
+                    <td>
+                        {% if entry.event == 'error' %}
+                        <span class="badge badge-danger">{{ entry.event }}</span>
+                        {% elif entry.event == 'business_complete' %}
+                        <span class="badge badge-success">complete</span>
+                        {% elif entry.event == 'business_start' %}
+                        <span class="badge badge-primary">start</span>
+                        {% elif entry.event == 'topic_processed' %}
+                        <span class="badge badge-gray">topic</span>
+                        {% else %}
+                        <span class="badge badge-gray">{{ entry.event }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.get('business_name', entry.get('business_id', '-')) }}</td>
+                    <td>{{ entry.get('topic', '-') }}</td>
+                    <td>
+                        {% set st = entry.get('status', '') %}
+                        {% if st == 'completed' %}
+                        <span class="badge badge-success">{{ st }}</span>
+                        {% elif st in ('failed', 'failed_qa', 'duplicate') %}
+                        <span class="badge badge-danger">{{ st }}</span>
+                        {% elif st == 'dry_run' %}
+                        <span class="badge badge-warning">{{ st }}</span>
+                        {% elif st %}
+                        <span class="badge badge-gray">{{ st }}</span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if entry.get('error') %}
+                        <span style="color: var(--red);">{{ entry.error[:100] }}</span>
+                        {% elif entry.get('topics_generated') is not none %}
+                        {{ entry.topics_generated }} topics generated
+                        {% elif entry.get('details') %}
+                        {{ entry.details[:100] }}
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

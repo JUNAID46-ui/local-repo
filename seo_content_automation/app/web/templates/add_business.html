@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Add Business{% endblock %}
+{% block page_title %}Add New Business{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('businesses_list') }}" class="btn btn-outline btn-sm">Back to Businesses</a>
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('add_business') }}" class="form-page">
+    <div class="grid-2">
+        <!-- Basic Info -->
+        <div class="card">
+            <div class="card-header"><h3>Basic Information</h3></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="business_name">Business Name *</label>
+                    <input type="text" name="business_name" id="business_name" class="form-control" placeholder="e.g. Smith's Plumbing" required>
+                </div>
+                <div class="form-group">
+                    <label for="website">Website</label>
+                    <input type="url" name="website" id="website" class="form-control" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="industry">Industry</label>
+                    <input type="text" name="industry" id="industry" class="form-control" placeholder="e.g. Plumbing, HVAC, Legal">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" name="location" id="location" class="form-control" placeholder="e.g. Dallas, TX">
+                </div>
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <input type="text" name="country" id="country" class="form-control" placeholder="e.g. United States" value="United States">
+                </div>
+            </div>
+        </div>
+
+        <!-- Services -->
+        <div class="card">
+            <div class="card-header"><h3>Services &amp; Audience</h3></div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="primary_service">Primary Service</label>
+                    <input type="text" name="primary_service" id="primary_service" class="form-control" placeholder="e.g. Emergency Plumbing">
+                </div>
+                <div class="form-group">
+                    <label for="services">All Services (comma separated)</label>
+                    <input type="text" name="services" id="services" class="form-control" placeholder="e.g. Drain Cleaning, Pipe Repair, Water Heater Installation">
+                </div>
+                <div class="form-group">
+                    <label for="target_audience">Target Audience</label>
+                    <input type="text" name="target_audience" id="target_audience" class="form-control" placeholder="e.g. Homeowners in Dallas-Fort Worth area">
+                </div>
+                <div class="form-group">
+                    <label for="service_areas">Service Areas (comma separated)</label>
+                    <input type="text" name="service_areas" id="service_areas" class="form-control" placeholder="e.g. Dallas, Fort Worth, Arlington">
+                </div>
+                <div class="form-group">
+                    <label for="brand_voice">Brand Voice</label>
+                    <input type="text" name="brand_voice" id="brand_voice" class="form-control" placeholder="professional, helpful, knowledgeable" value="professional, helpful, knowledgeable">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description & Facts -->
+    <div class="card" style="margin-top: 24px;">
+        <div class="card-header"><h3>Description &amp; Facts</h3></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label for="business_description">Business Description</label>
+                <textarea name="business_description" id="business_description" class="form-control" rows="4" placeholder="Describe your business, specialties, and what makes you unique..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="business_facts">Business Facts (comma separated)</label>
+                <input type="text" name="business_facts" id="business_facts" class="form-control" placeholder="e.g. 20+ years experience, Licensed & insured, 24/7 availability">
+            </div>
+        </div>
+    </div>
+
+    <!-- SEO Keywords -->
+    <div class="card" style="margin-top: 24px;">
+        <div class="card-header"><h3>SEO Keywords</h3></div>
+        <div class="card-body">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="primary_keywords">Primary Keywords (comma separated)</label>
+                    <input type="text" name="primary_keywords" id="primary_keywords" class="form-control" placeholder="e.g. plumber Dallas, emergency plumbing">
+                </div>
+                <div class="form-group">
+                    <label for="commercial_keywords">Commercial Keywords (comma separated)</label>
+                    <input type="text" name="commercial_keywords" id="commercial_keywords" class="form-control" placeholder="e.g. hire plumber, plumbing cost, best plumber near me">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="existing_content_urls">Existing Content URLs (comma separated)</label>
+                <input type="text" name="existing_content_urls" id="existing_content_urls" class="form-control" placeholder="https://example.com/blog/article-1, https://example.com/blog/article-2">
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+        <a href="{{ url_for('businesses_list') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary">Add Business</button>
+    </div>
+</form>
+{% endblock %}

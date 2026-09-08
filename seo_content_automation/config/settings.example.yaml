@@ -1,0 +1,116 @@
+schedule:
+  timezone: "Asia/Karachi"
+  hour: 18
+  minute: 0
+
+content:
+  max_articles_per_business: 5
+  target_keyword_density: 2.0
+  keyword_density_tolerance: 0.5
+  max_revision_attempts: 3
+  meta_description_min_length: 140
+  meta_description_max_length: 160
+  min_article_word_count: 1200
+  max_article_word_count: 2500
+
+images:
+  featured_count: 1
+  supporting_min: 2
+  supporting_max: 4
+
+models:
+  primary: "claude-sonnet-4-20250514"
+  research: "claude-sonnet-4-20250514"
+  validation: "claude-haiku-4-5-20251001"
+
+paths:
+  output_dir: "output"
+  log_dir: "logs"
+  data_dir: "data"
+
+google:
+  sheet_id: ""
+  drive_folder_id: ""
+  service_account_file: "credentials/service_account.json"
+
+ai_phrase_blocklist:
+  - "in today's digital world"
+  - "in today's fast-paced world"
+  - "in the ever-evolving landscape"
+  - "whether you are"
+  - "it is important to note"
+  - "furthermore"
+  - "moreover"
+  - "delve into"
+  - "unlock"
+  - "leverage"
+  - "cutting-edge"
+  - "seamless"
+  - "game-changing"
+  - "comprehensive solution"
+  - "robust solution"
+  - "as an AI"
+  - "ai-powered"
+  - "navigating the"
+  - "dive into"
+  - "realm of"
+  - "landscape of"
+  - "harness the power"
+  - "at the end of the day"
+  - "it goes without saying"
+  - "needless to say"
+  - "in conclusion"
+  - "to sum up"
+  - "in a nutshell"
+  - "first and foremost"
+  - "last but not least"
+  - "when it comes to"
+  - "look no further"
+  - "without further ado"
+  - "rest assured"
+  - "stands out"
+  - "top-notch"
+  - "state-of-the-art"
+  - "second to none"
+  - "world-class"
+  - "best-in-class"
+  - "one-stop shop"
+  - "elevate your"
+  - "revolutionize"
+  - "empower"
+  - "streamline"
+  - "optimize your"
+  - "take your * to the next level"
+
+commercial_intent_terms:
+  - "service"
+  - "repair"
+  - "technician"
+  - "professional"
+  - "local"
+  - "near me"
+  - "company"
+  - "cost"
+  - "estimate"
+  - "appointment"
+  - "same day"
+  - "emergency"
+  - "expert"
+  - "specialist"
+  - "installation"
+  - "maintenance"
+  - "inspection"
+  - "replacement"
+  - "contractor"
+  - "quote"
+  - "pricing"
+  - "affordable"
+  - "reliable"
+  - "licensed"
+  - "certified"
+  - "insured"
+  - "experienced"
+  - "trusted"
+  - "recommended"
+  - "rated"
+  - "reviewed"

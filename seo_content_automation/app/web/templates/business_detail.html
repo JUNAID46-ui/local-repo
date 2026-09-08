@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}{{ business.business_name }}{% endblock %}
+{% block page_title %}{{ business.business_name }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('businesses_list') }}" class="btn btn-outline btn-sm">Back to Businesses</a>
+<button class="btn btn-primary btn-sm" onclick="openModal()">Run Pipeline</button>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h3>Business Profile</h3>
+            {% if business.active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-gray">Inactive</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="detail-item">
+                <div class="detail-label">Business ID</div>
+                <div class="detail-value"><code>{{ business.business_id }}</code></div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Industry</div>
+                <div class="detail-value">{{ business.industry or "Not set" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Location</div>
+                <div class="detail-value">{{ business.location }}{% if business.country %}, {{ business.country }}{% endif %}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Website</div>
+                <div class="detail-value">
+                    {% if business.website %}
+                    <a href="{{ business.website }}" target="_blank" rel="noopener">{{ business.website }}</a>
+                    {% else %}Not set{% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Primary Service</div>
+                <div class="detail-value">{{ business.primary_service or "Not set" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Target Audience</div>
+                <div class="detail-value">{{ business.target_audience or "Not set" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Brand Voice</div>
+                <div class="detail-value">{{ business.brand_voice or "Not set" }}</div>
+            </div>
+            {% if business.business_description %}
+            <div class="detail-item">
+                <div class="detail-label">Description</div>
+                <div class="detail-value">{{ business.business_description }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Pipeline State</h3>
+        </div>
+        <div class="card-body">
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="stat-card" style="border-left-color: var(--blue); padding: 16px;">
+                    <div class="stat-value">{{ state.total_articles_generated }}</div>
+                    <div class="stat-label">Articles Generated</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--green); padding: 16px;">
+                    <div class="stat-value" style="font-size: 14px;">{{ state.last_run or "Never" }}</div>
+                    <div class="stat-label">Last Run</div>
+                </div>
+            </div>
+
+            <div class="detail-item" style="margin-top: 16px;">
+                <div class="detail-label">Generated Topics ({{ state.generated_topics|length }})</div>
+                <div class="detail-value">
+                    {% if state.generated_topics %}
+                    <div class="tag-list">
+                        {% for topic in state.generated_topics %}
+                        <span class="tag">{{ topic }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span style="color: var(--gray-400);">None yet</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Primary Keywords Used ({{ state.generated_primary_keywords|length }})</div>
+                <div class="detail-value">
+                    {% if state.generated_primary_keywords %}
+                    <div class="tag-list">
+                        {% for kw in state.generated_primary_keywords %}
+                        <span class="tag">{{ kw }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span style="color: var(--gray-400);">None yet</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header"><h3>Services ({{ business.services|length }})</h3></div>
+        <div class="card-body">
+            {% if business.services %}
+            <div class="tag-list">
+                {% for svc in business.services %}
+                <span class="tag">{{ svc }}</span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <span style="color: var(--gray-400);">No services listed</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Keywords</h3></div>
+        <div class="card-body">
+            <div class="detail-item">
+                <div class="detail-label">Primary Keywords</div>
+                <div class="detail-value">
+                    {% if business.primary_keywords %}
+                    <div class="tag-list">
+                        {% for kw in business.primary_keywords %}
+                        <span class="tag">{{ kw }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Commercial Keywords</div>
+                <div class="detail-value">
+                    {% if business.commercial_keywords %}
+                    <div class="tag-list">
+                        {% for kw in business.commercial_keywords %}
+                        <span class="tag">{{ kw }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Service Areas</div>
+                <div class="detail-value">
+                    {% if business.service_areas %}
+                    <div class="tag-list">
+                        {% for area in business.service_areas %}
+                        <span class="tag">{{ area }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if business.business_facts %}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header"><h3>Business Facts</h3></div>
+    <div class="card-body">
+        <ul style="padding-left: 20px; color: var(--gray-700);">
+            {% for fact in business.business_facts %}
+            <li style="margin-bottom: 6px;">{{ fact }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% if outputs %}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header"><h3>Generated Documents ({{ outputs|length }})</h3></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Date</th>
+                    <th>Size</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in outputs %}
+                <tr>
+                    <td>{{ doc.name }}</td>
+                    <td>{{ doc.date }}</td>
+                    <td>{{ doc.size_kb }} KB</td>
+                    <td><a href="{{ url_for('download_document', path=doc.abs_path) }}" class="btn btn-outline btn-sm">Download</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

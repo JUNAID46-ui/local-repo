@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+<span class="badge {% if pipeline_running %}badge-success{% else %}badge-gray{% endif %}" id="pipelineStatusBadge">
+    <span class="status-dot {% if pipeline_running %}running{% else %}idle{% endif %}"></span>
+    {% if pipeline_running %}Pipeline Running{% else %}Idle{% endif %}
+</span>
+<button class="btn btn-primary btn-sm" onclick="openModal()">Run Pipeline</button>
+{% endblock %}
+
+{% block content %}
+<!-- Pipeline Tracker -->
+<div class="pipeline-tracker" id="pipelineTracker" {% if not pipeline_running %}style="display:none;"{% endif %}>
+    <div class="pipeline-header">
+        <h3>Live Pipeline Status</h3>
+        <span class="pipeline-mode" id="pipelineMode">{{ pipeline_status.mode }}</span>
+    </div>
+    <div class="pipeline-info">
+        <span id="pipelineBusiness">{{ pipeline_status.current_business }}</span>
+        <span id="pipelineTopic">{{ pipeline_status.current_topic }}</span>
+        <span id="pipelineStarted">Started: {{ pipeline_status.started_at }}</span>
+    </div>
+    <div class="pipeline-stages">
+        {% for stage in stages %}
+        <div class="pipeline-stage {% if loop.index0 < pipeline_status.stage_index %}completed{% elif loop.index0 == pipeline_status.stage_index and pipeline_running %}active{% endif %}" data-stage="{{ loop.index0 }}">
+            <div class="stage-indicator">
+                {% if loop.index0 < pipeline_status.stage_index %}
+                <span class="stage-check">&#10003;</span>
+                {% else %}
+                <span class="stage-num">{{ loop.index }}</span>
+                {% endif %}
+            </div>
+            <div class="stage-label">{{ stage }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pipeline-errors" id="pipelineErrors" style="display:none;"></div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card" style="border-left-color: var(--blue);">
+        <div class="stat-icon" style="background: var(--blue-glow); color: var(--blue);">&#9733;</div>
+        <div>
+            <div class="stat-label">Active Businesses</div>
+            <div class="stat-value">{{ stats.active_businesses }}</div>
+            <div class="stat-sub">{{ stats.total_businesses }} total registered</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--green);">
+        <div class="stat-icon" style="background: var(--green-glow); color: var(--green);">&#9998;</div>
+        <div>
+            <div class="stat-label">Articles Generated</div>
+            <div class="stat-value">{{ stats.total_articles }}</div>
+            <div class="stat-sub">across all businesses</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--purple);">
+        <div class="stat-icon" style="background: var(--purple-glow); color: var(--purple);">&#9783;</div>
+        <div>
+            <div class="stat-label">Documents</div>
+            <div class="stat-value">{{ stats.total_documents }}</div>
+            <div class="stat-sub">DOCX files generated</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--orange);">
+        <div class="stat-icon" style="background: var(--orange-glow); color: var(--orange);">&#9654;</div>
+        <div>
+            <div class="stat-label">Pipeline Runs</div>
+            <div class="stat-value">{{ stats.total_runs }}</div>
+            <div class="stat-sub">{{ stats.failed_jobs }} failed</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: var(--cyan);">
+        <div class="stat-icon" style="background: var(--cyan-glow); color: var(--cyan);">&#128339;</div>
+        <div>
+            <div class="stat-label">Last Run</div>
+            <div class="stat-value" style="font-size: 16px;">{{ stats.last_run }}</div>
+            <div class="stat-sub">most recent execution</div>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Grid -->
+<div class="grid-2">
+    <!-- Recent Pipeline Runs -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Pipeline Runs</h3>
+            <a href="{{ url_for('runs_list') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        {% if recent_logs %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Run</th>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td><a href="{{ url_for('run_detail', log_name=log.name) }}">{{ log.run_id or log.name }}</a></td>
+                        <td>{{ log.modified }}</td>
+                        <td>{{ log.duration }}s</td>
+                        <td>
+                            {% if log.failed > 0 %}
+                            <span class="badge badge-danger">{{ log.failed }} failed</span>
+                            {% elif log.completed > 0 %}
+                            <span class="badge badge-success">{{ log.completed }} done</span>
+                            {% else %}
+                            <span class="badge badge-gray">{{ log.entry_count }} events</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">&#9654;</div>
+                <p>No pipeline runs yet. Click "Run Pipeline" to start.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Documents -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Documents</h3>
+            <a href="{{ url_for('documents_list') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        {% if recent_outputs %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Business</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in recent_outputs %}
+                    <tr>
+                        <td><a href="{{ url_for('download_document', path=doc.abs_path) }}">{{ doc.name }}</a></td>
+                        <td>{{ doc.business }}</td>
+                        <td>{{ doc.size_kb }} KB</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-icon">&#9783;</div>
+                <p>No documents generated yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Last Run Summary -->
+{% if last_log %}
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>Last Run Summary</h3>
+        <span class="badge badge-primary">{{ last_log.run_id }}</span>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="detail-label">Run ID</div>
+                <div class="detail-value">{{ last_log.run_id }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Duration</div>
+                <div class="detail-value">{{ last_log.duration_seconds|round(1) }} seconds</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Started</div>
+                <div class="detail-value">{{ last_log.start_time }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Completed</div>
+                <div class="detail-value">{{ last_log.end_time }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if last_log.entries %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Business</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in last_log.entries[-10:] %}
+                <tr>
+                    <td><span class="log-time">{{ entry.timestamp[11:19] }}</span></td>
+                    <td>
+                        {% if entry.event == 'error' %}
+                        <span class="badge badge-danger">{{ entry.event }}</span>
+                        {% elif entry.event == 'business_complete' %}
+                        <span class="badge badge-success">{{ entry.event }}</span>
+                        {% else %}
+                        <span class="badge badge-gray">{{ entry.event }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ entry.get('business_name', entry.get('business_id', '')) }}</td>
+                    <td>
+                        {% if entry.get('topic') %}{{ entry.topic }} - {{ entry.status }}
+                        {% elif entry.get('error') %}{{ entry.error[:80] }}
+                        {% elif entry.get('topics_generated') is not none %}{{ entry.topics_generated }} topics, {{ entry.status }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Businesses Overview -->
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>Businesses Overview</h3>
+        <div>
+            <a href="{{ url_for('add_business') }}" class="btn btn-primary btn-sm" style="margin-right: 8px;">+ Add</a>
+            <a href="{{ url_for('businesses_list') }}" class="btn btn-outline btn-sm">Manage</a>
+        </div>
+    </div>
+    {% if businesses %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Business</th>
+                    <th>Industry</th>
+                    <th>Location</th>
+                    <th>Services</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in businesses %}
+                <tr>
+                    <td><a href="{{ url_for('business_detail', business_id=b.business_id) }}">{{ b.business_name }}</a></td>
+                    <td>{{ b.industry }}</td>
+                    <td>{{ b.location }}</td>
+                    <td>{{ b.services|length }}</td>
+                    <td>
+                        {% if b.active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-gray">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body">
+        <div class="empty-state">
+            <div class="empty-icon">&#9733;</div>
+            <p>No businesses configured. <a href="{{ url_for('add_business') }}">Add your first business</a> to get started.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
