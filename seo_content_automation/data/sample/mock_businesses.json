@@ -1,0 +1,41 @@
+[
+  {
+    "business_id": "example_appliance_repair",
+    "business_name": "Example Appliance Repair",
+    "website": "https://example.com",
+    "location": "Tucson, Arizona",
+    "country": "United States",
+    "industry": "Appliance Repair",
+    "services": [
+      "Refrigerator Repair",
+      "Oven Repair",
+      "Dishwasher Repair",
+      "Dryer Repair",
+      "Washer Repair"
+    ],
+    "primary_service": "Refrigerator Repair",
+    "target_audience": "Homeowners in Tucson needing appliance repair",
+    "business_description": "Example Appliance Repair provides professional home appliance repair services in Tucson, Arizona and surrounding areas.",
+    "business_facts": [
+      "Serves Tucson and surrounding areas",
+      "Repairs all major home appliance brands",
+      "Provides in-home repair service"
+    ],
+    "brand_voice": "professional, helpful, knowledgeable, friendly",
+    "primary_keywords": [
+      "appliance repair Tucson",
+      "refrigerator repair Tucson",
+      "oven repair Tucson"
+    ],
+    "commercial_keywords": [
+      "appliance repair service",
+      "appliance technician",
+      "home appliance repair"
+    ],
+    "service_areas": ["Tucson", "Marana", "Oro Valley", "Sahuarita", "Vail"],
+    "existing_content_urls": [],
+    "internal_link_base": "https://example.com",
+    "output_folder": "Example_Appliance_Repair",
+    "active": true
+  }
+]
