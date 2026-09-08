@@ -16,7 +16,7 @@
         <div class="detail-grid">
             <div class="detail-item">
                 <div class="detail-label">Run ID</div>
-                <div class="detail-value">{{ log.run_id }}</div>
+                <div class="detail-value"><code>{{ log.run_id }}</code></div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Duration</div>
@@ -84,7 +84,7 @@
                     </td>
                     <td>
                         {% if entry.get('error') %}
-                        <span style="color: var(--danger);">{{ entry.error[:100] }}</span>
+                        <span style="color: var(--red);">{{ entry.error[:100] }}</span>
                         {% elif entry.get('topics_generated') is not none %}
                         {{ entry.topics_generated }} topics generated
                         {% elif entry.get('details') %}

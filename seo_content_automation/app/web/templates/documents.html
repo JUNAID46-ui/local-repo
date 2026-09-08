@@ -2,6 +2,10 @@
 {% block title %}Documents{% endblock %}
 {% block page_title %}Documents{% endblock %}
 
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal()">Generate More</button>
+{% endblock %}
+
 {% block content %}
 {% if outputs %}
 <div class="card">
@@ -24,7 +28,7 @@
                 {% for doc in outputs %}
                 <tr>
                     <td>{{ doc.name }}</td>
-                    <td>{{ doc.business }}</td>
+                    <td><span class="badge badge-gray">{{ doc.business }}</span></td>
                     <td>{{ doc.date }}</td>
                     <td>{{ doc.size_kb }} KB</td>
                     <td>{{ doc.modified }}</td>
@@ -41,7 +45,7 @@
         <div class="empty-state">
             <div class="empty-icon">&#9783;</div>
             <p>No documents generated yet.</p>
-            <p>Run the full pipeline (not dry run) to generate DOCX documents.</p>
+            <p>Run the full pipeline (not dry run) to generate DOCX articles.</p>
         </div>
     </div>
 </div>

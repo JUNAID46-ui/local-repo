@@ -3,19 +3,31 @@
 {% block page_title %}Settings{% endblock %}
 
 {% block content %}
-<div class="stats-grid" style="margin-bottom: 24px;">
-    <div class="stat-card {% if api_configured %}stat-success{% else %}stat-warning{% endif %}">
-        <div class="stat-label">Anthropic API</div>
-        <div class="stat-value" style="font-size: 18px;">{% if api_configured %}Configured{% else %}Not Set{% endif %}</div>
-        <div class="stat-sub">{% if api_configured %}API key is set{% else %}Set ANTHROPIC_API_KEY in .env{% endif %}</div>
+<!-- API Status Cards -->
+<div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
+    <div class="stat-card" style="border-left-color: {% if api_configured %}var(--green){% else %}var(--orange){% endif %};">
+        <div class="stat-icon" style="background: {% if api_configured %}var(--green-glow){% else %}var(--orange-glow){% endif %}; color: {% if api_configured %}var(--green){% else %}var(--orange){% endif %};">
+            {% if api_configured %}&#10003;{% else %}&#33;{% endif %}
+        </div>
+        <div>
+            <div class="stat-label">Anthropic API</div>
+            <div class="stat-value" style="font-size: 18px;">{% if api_configured %}Configured{% else %}Not Set{% endif %}</div>
+            <div class="stat-sub">{% if api_configured %}API key is set in environment{% else %}Set ANTHROPIC_API_KEY in .env{% endif %}</div>
+        </div>
     </div>
-    <div class="stat-card {% if sheets_configured %}stat-success{% else %}stat-warning{% endif %}">
-        <div class="stat-label">Google Sheets</div>
-        <div class="stat-value" style="font-size: 18px;">{% if sheets_configured %}Configured{% else %}Not Set{% endif %}</div>
-        <div class="stat-sub">{% if sheets_configured %}Sheet ID is set{% else %}Set GOOGLE_SHEET_ID in .env{% endif %}</div>
+    <div class="stat-card" style="border-left-color: {% if sheets_configured %}var(--green){% else %}var(--orange){% endif %};">
+        <div class="stat-icon" style="background: {% if sheets_configured %}var(--green-glow){% else %}var(--orange-glow){% endif %}; color: {% if sheets_configured %}var(--green){% else %}var(--orange){% endif %};">
+            {% if sheets_configured %}&#10003;{% else %}&#33;{% endif %}
+        </div>
+        <div>
+            <div class="stat-label">Google Sheets</div>
+            <div class="stat-value" style="font-size: 18px;">{% if sheets_configured %}Connected{% else %}Not Set{% endif %}</div>
+            <div class="stat-sub">{% if sheets_configured %}Sheet ID is configured{% else %}Set GOOGLE_SHEET_ID in .env{% endif %}</div>
+        </div>
     </div>
 </div>
 
+<!-- Configuration Sections -->
 <div class="grid-2">
     {% for section_name, section_values in config.items() %}
     <div class="card">
@@ -34,6 +46,7 @@
     {% endfor %}
 </div>
 
+<!-- Configuration Files -->
 <div class="card" style="margin-top: 24px;">
     <div class="card-header">
         <h3>Configuration Files</h3>
@@ -41,19 +54,42 @@
     <div class="card-body">
         <div class="config-row">
             <span class="config-key">Settings YAML</span>
-            <span class="config-val">config/settings.yaml</span>
+            <span class="config-val"><code>config/settings.yaml</code></span>
         </div>
         <div class="config-row">
             <span class="config-key">Environment File</span>
-            <span class="config-val">.env</span>
+            <span class="config-val"><code>.env</code></span>
         </div>
         <div class="config-row">
             <span class="config-key">Google Credentials</span>
-            <span class="config-val">credentials/service_account.json</span>
+            <span class="config-val"><code>credentials/service_account.json</code></span>
         </div>
     </div>
     <div class="card-footer">
-        Edit config/settings.yaml or .env to change settings. Restart the web server for changes to take effect.
+        Edit <code>config/settings.yaml</code> or <code>.env</code> to change settings. Restart the web server for changes to take effect.
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header"><h3>Quick Start Guide</h3></div>
+    <div class="card-body">
+        <div class="detail-item">
+            <div class="detail-label">1. Configure API Key</div>
+            <div class="detail-value">Add <code>ANTHROPIC_API_KEY=your-key</code> to your <code>.env</code> file</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">2. Add Businesses</div>
+            <div class="detail-value">Use the <a href="{{ url_for('add_business') }}">Add Business</a> page or connect Google Sheets</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">3. Run Pipeline</div>
+            <div class="detail-value">Click "Run Pipeline" from the Dashboard to start generating content</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">4. Download Content</div>
+            <div class="detail-value">Generated DOCX files appear in the <a href="{{ url_for('documents_list') }}">Documents</a> section</div>
+        </div>
     </div>
 </div>
 {% endblock %}

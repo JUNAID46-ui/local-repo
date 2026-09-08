@@ -4,6 +4,7 @@
 
 {% block topbar_actions %}
 <a href="{{ url_for('businesses_list') }}" class="btn btn-outline btn-sm">Back to Businesses</a>
+<button class="btn btn-primary btn-sm" onclick="openModal()">Run Pipeline</button>
 {% endblock %}
 
 {% block content %}
@@ -20,15 +21,15 @@
         <div class="card-body">
             <div class="detail-item">
                 <div class="detail-label">Business ID</div>
-                <div class="detail-value">{{ business.business_id }}</div>
+                <div class="detail-value"><code>{{ business.business_id }}</code></div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Industry</div>
-                <div class="detail-value">{{ business.industry }}</div>
+                <div class="detail-value">{{ business.industry or "Not set" }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Location</div>
-                <div class="detail-value">{{ business.location }}, {{ business.country }}</div>
+                <div class="detail-value">{{ business.location }}{% if business.country %}, {{ business.country }}{% endif %}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Website</div>
@@ -40,20 +41,22 @@
             </div>
             <div class="detail-item">
                 <div class="detail-label">Primary Service</div>
-                <div class="detail-value">{{ business.primary_service }}</div>
+                <div class="detail-value">{{ business.primary_service or "Not set" }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Target Audience</div>
-                <div class="detail-value">{{ business.target_audience }}</div>
+                <div class="detail-value">{{ business.target_audience or "Not set" }}</div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Brand Voice</div>
-                <div class="detail-value">{{ business.brand_voice }}</div>
+                <div class="detail-value">{{ business.brand_voice or "Not set" }}</div>
             </div>
+            {% if business.business_description %}
             <div class="detail-item">
                 <div class="detail-label">Description</div>
                 <div class="detail-value">{{ business.business_description }}</div>
             </div>
+            {% endif %}
         </div>
     </div>
 
@@ -62,15 +65,18 @@
             <h3>Pipeline State</h3>
         </div>
         <div class="card-body">
-            <div class="detail-item">
-                <div class="detail-label">Total Articles Generated</div>
-                <div class="detail-value" style="font-size: 24px; font-weight: 700;">{{ state.total_articles_generated }}</div>
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="stat-card" style="border-left-color: var(--blue); padding: 16px;">
+                    <div class="stat-value">{{ state.total_articles_generated }}</div>
+                    <div class="stat-label">Articles Generated</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--green); padding: 16px;">
+                    <div class="stat-value" style="font-size: 14px;">{{ state.last_run or "Never" }}</div>
+                    <div class="stat-label">Last Run</div>
+                </div>
             </div>
-            <div class="detail-item">
-                <div class="detail-label">Last Run</div>
-                <div class="detail-value">{{ state.last_run or "Never" }}</div>
-            </div>
-            <div class="detail-item">
+
+            <div class="detail-item" style="margin-top: 16px;">
                 <div class="detail-label">Generated Topics ({{ state.generated_topics|length }})</div>
                 <div class="detail-value">
                     {% if state.generated_topics %}
@@ -124,31 +130,37 @@
             <div class="detail-item">
                 <div class="detail-label">Primary Keywords</div>
                 <div class="detail-value">
+                    {% if business.primary_keywords %}
                     <div class="tag-list">
                         {% for kw in business.primary_keywords %}
                         <span class="tag">{{ kw }}</span>
                         {% endfor %}
                     </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
                 </div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Commercial Keywords</div>
                 <div class="detail-value">
+                    {% if business.commercial_keywords %}
                     <div class="tag-list">
                         {% for kw in business.commercial_keywords %}
                         <span class="tag">{{ kw }}</span>
                         {% endfor %}
                     </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
                 </div>
             </div>
             <div class="detail-item">
                 <div class="detail-label">Service Areas</div>
                 <div class="detail-value">
+                    {% if business.service_areas %}
                     <div class="tag-list">
                         {% for area in business.service_areas %}
                         <span class="tag">{{ area }}</span>
                         {% endfor %}
                     </div>
+                    {% else %}<span style="color: var(--gray-400);">None</span>{% endif %}
                 </div>
             </div>
         </div>
@@ -170,7 +182,7 @@
 
 {% if outputs %}
 <div class="card" style="margin-top: 24px;">
-    <div class="card-header"><h3>Generated Documents</h3></div>
+    <div class="card-header"><h3>Generated Documents ({{ outputs|length }})</h3></div>
     <div class="table-wrap">
         <table>
             <thead>

@@ -10,8 +10,11 @@
 <div class="layout">
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <h2>SEO Automation</h2>
-            <span>Content Pipeline</span>
+            <div class="brand-icon">S</div>
+            <div>
+                <h2>SEO Automation</h2>
+                <span>Content Pipeline</span>
+            </div>
         </div>
         <ul class="sidebar-nav">
             <li>
@@ -22,6 +25,11 @@
             <li>
                 <a href="{{ url_for('businesses_list') }}" class="{% if request.endpoint in ('businesses_list', 'business_detail') %}active{% endif %}">
                     <span class="nav-icon">&#9733;</span> Businesses
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('add_business') }}" class="{% if request.endpoint == 'add_business' %}active{% endif %}">
+                    <span class="nav-icon">&#43;</span> Add Business
                 </a>
             </li>
             <li>
@@ -40,6 +48,19 @@
                 </a>
             </li>
         </ul>
+        <div class="sidebar-footer">
+            <div class="schedule-info">
+                <span class="schedule-label">Daily Schedule</span>
+                <span class="schedule-time">{{ schedule_time }} {{ schedule_tz }}</span>
+            </div>
+            <div class="sidebar-status">
+                {% if pipeline_running %}
+                <span class="status-dot running"></span> Pipeline Running
+                {% else %}
+                <span class="status-dot idle"></span> System Idle
+                {% endif %}
+            </div>
+        </div>
     </aside>
 
     <div class="main-content">
@@ -89,7 +110,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Start Run</button>
+                <button type="submit" class="btn btn-primary">Start Pipeline</button>
             </div>
         </form>
     </div>
