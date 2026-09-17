@@ -103,6 +103,64 @@ def _update_eta(progress: JobProgress, frames_done: int, total: int):
         progress.progress = frames_done / total
 
 
+def _detect_mask_fallback(
+    image: np.ndarray,
+    method: str,
+    text_prompt: str,
+    box: Optional[list[int]],
+    point: Optional[tuple[int, int]],
+) -> np.ndarray:
+    """
+    Try AI-based detection first. If the models are not installed,
+    fall back to simple OpenCV-based mask creation from box/point,
+    or automatic thresholding for text prompts.
+    """
+    try:
+        from app.detection import detect_watermark
+        device = get_device()
+        return detect_watermark(image, method=method, text_prompt=text_prompt,
+                                box=box, point=point, device=device)
+    except (ImportError, RuntimeError) as e:
+        logger.warning("AI detection unavailable (%s), using fallback", e)
+
+    h, w = image.shape[:2]
+
+    if method == "box" and box is not None:
+        mask = np.zeros((h, w), dtype=np.uint8)
+        x1, y1, x2, y2 = box
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(w, x2), min(h, y2)
+        mask[y1:y2, x1:x2] = 255
+        return mask
+
+    if method == "point" and point is not None:
+        mask = np.zeros((h, w), dtype=np.uint8)
+        px, py = point
+        radius = min(w, h) // 20
+        cv2.circle(mask, (px, py), radius, 255, -1)
+        return mask
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    return mask
+
+
+def _inpaint_fallback(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """
+    Try LaMa inpainting first. If not available, use OpenCV inpainting.
+    """
+    try:
+        from app.inpainting import inpaint_image_lama
+        device = get_device()
+        return inpaint_image_lama(image, mask, device)
+    except (ImportError, RuntimeError) as e:
+        logger.warning("LaMa unavailable (%s), using OpenCV inpainting", e)
+
+    return cv2.inpaint(image, mask, inpaintRadius=7, flags=cv2.INPAINT_TELEA)
+
+
 def process_image(
     image_path: str,
     output_path: str,
@@ -117,12 +175,9 @@ def process_image(
     on_progress: Optional[Callable] = None,
 ) -> dict:
     """Process a single image to remove a watermark or logo."""
-    from app.detection import detect_watermark
-    from app.inpainting import inpaint_image_lama
     from app.surface_matching import match_histogram_local, estimate_noise_params, add_matching_grain
     from app.quality import check_edge_quality
 
-    device = get_device()
     progress = JobProgress(job_id=job_id, started_at=time.time())
 
     progress.status = JobStatus.DETECTING
@@ -133,14 +188,7 @@ def process_image(
     if image is None:
         raise RuntimeError(f"Cannot read image: {image_path}")
 
-    mask = detect_watermark(
-        image,
-        method=detection_method,
-        text_prompt=text_prompt,
-        box=box,
-        point=point,
-        device=device,
-    )
+    mask = _detect_mask_fallback(image, detection_method, text_prompt, box, point)
 
     if mask.max() == 0:
         progress.status = JobStatus.DONE
@@ -164,7 +212,7 @@ def process_image(
     progress.message = "Inpainting"
     progress.save()
 
-    result = inpaint_image_lama(image, mask, device, feather_px=feather_px)
+    result = _inpaint_fallback(image, mask)
 
     progress.status = JobStatus.SURFACE_MATCHING
     progress.message = "Matching surface"
@@ -213,15 +261,6 @@ def process_video(
     on_progress: Optional[Callable] = None,
 ) -> dict:
     """Process a video to remove a watermark or logo."""
-    from app.detection import detect_watermark
-    from app.tracking import (
-        propagate_mask_through_video,
-        refine_mask_with_perspective,
-        dilate_masks,
-        classify_mask_motion,
-    )
-    from app.static_overlay import process_static_watermark
-    from app.inpainting import inpaint_video_propainter, inpaint_image_lama
     from app.surface_matching import process_surface_matching
     from app.video_io import (
         get_video_info,
@@ -231,9 +270,8 @@ def process_video(
         rebuild_video,
         save_mask_video,
     )
-    from app.quality import check_video_quality, select_preview_frames
+    from app.quality import check_video_quality
 
-    device = get_device()
     progress = JobProgress(job_id=job_id, started_at=time.time())
 
     work_dir = PROGRESS_DIR / job_id
@@ -261,13 +299,8 @@ def process_video(
         progress.save()
 
         first_frame = cv2.imread(str(sorted(frames_dir.glob("*.jpg"))[0]))
-        initial_mask = detect_watermark(
-            first_frame,
-            method=detection_method,
-            text_prompt=text_prompt,
-            box=box,
-            point=point,
-            device=device,
+        initial_mask = _detect_mask_fallback(
+            first_frame, detection_method, text_prompt, box, point
         )
 
         if initial_mask.max() == 0:
@@ -280,27 +313,50 @@ def process_video(
         progress.message = "Tracking mask through video"
         progress.save()
 
-        masks = propagate_mask_through_video(frames_dir, initial_mask, 0, device)
-
         frames = read_frames(frames_dir)
-        masks = refine_mask_with_perspective(frames, masks)
-        masks = dilate_masks(masks, dilate_px)
+
+        try:
+            from app.tracking import (
+                propagate_mask_through_video,
+                refine_mask_with_perspective,
+                dilate_masks,
+                classify_mask_motion,
+            )
+            masks = propagate_mask_through_video(frames_dir, initial_mask, 0, get_device())
+            masks = refine_mask_with_perspective(frames, masks)
+            masks = dilate_masks(masks, dilate_px)
+        except (ImportError, RuntimeError) as e:
+            logger.warning("SAM 2 tracking unavailable (%s), using static mask for all frames", e)
+            if dilate_px > 0:
+                kernel = cv2.getStructuringElement(
+                    cv2.MORPH_ELLIPSE, (dilate_px * 2 + 1, dilate_px * 2 + 1)
+                )
+                initial_mask = cv2.dilate(initial_mask, kernel)
+            masks = {i: initial_mask for i in range(len(frames))}
 
         if export_mask:
             mask_out = str(Path(output_path).with_suffix(".mask.mp4"))
             save_mask_video(masks, mask_out, info["fps"], (info["height"], info["width"]))
             progress.mask_path = mask_out
 
-        motion_type = classify_mask_motion(masks)
+        try:
+            from app.tracking import classify_mask_motion
+            motion_type = classify_mask_motion(masks)
+        except ImportError:
+            motion_type = "static"
+
         logger.info("Mask classified as: %s", motion_type)
 
         if motion_type == "static":
-            progress.status = JobStatus.STATIC_REMOVAL
-            progress.message = "Removing static overlay"
-            progress.save()
-
-            frames, residual_masks = process_static_watermark(frames, initial_mask)
-            masks = {i: residual_masks[i] for i in range(len(residual_masks))}
+            try:
+                from app.static_overlay import process_static_watermark
+                progress.status = JobStatus.STATIC_REMOVAL
+                progress.message = "Removing static overlay"
+                progress.save()
+                frames, residual_masks = process_static_watermark(frames, initial_mask)
+                masks = {i: residual_masks[i] for i in range(len(residual_masks))}
+            except Exception as e:
+                logger.warning("Static overlay removal failed (%s), skipping", e)
 
         has_residual = any(m.max() > 0 for m in masks.values())
         if has_residual:
@@ -308,8 +364,10 @@ def process_video(
             progress.message = "Inpainting masked regions"
             progress.save()
 
-            frames = inpaint_video_propainter(frames, masks, device, chunk_size)
-            _update_eta(progress, len(frames) // 2, len(frames))
+            for i in range(len(frames)):
+                if i in masks and masks[i].max() > 0:
+                    frames[i] = _inpaint_fallback(frames[i], masks[i])
+                _update_eta(progress, i + 1, len(frames))
             progress.save()
 
         progress.status = JobStatus.SURFACE_MATCHING
