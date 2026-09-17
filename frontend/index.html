@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watermark Remover</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f1117;
+            color: #e4e4e7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+
+        .card {
+            background: #1a1b23;
+            border: 1px solid #2d2e3a;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #d1d5db;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #12131a;
+            border: 2px dashed #3b3c4a;
+            border-radius: 8px;
+            color: #e4e4e7;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #6366f1;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #12131a;
+            border: 1px solid #2d2e3a;
+            border-radius: 8px;
+            color: #e4e4e7;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px;
+            background: #1e1f2e;
+            border: 1px solid #2d2e3a;
+            border-radius: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: #6366f1;
+            cursor: pointer;
+        }
+
+        .checkbox-group span {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .checkbox-group.required {
+            border-color: #f87171;
+            background: #1a1520;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: #fff;
+            width: 100%;
+        }
+
+        .btn-primary:hover { background: #5558e6; }
+        .btn-primary:disabled { background: #3b3c4a; cursor: not-allowed; color: #6b7280; }
+
+        .btn-secondary {
+            background: #2d2e3a;
+            color: #e4e4e7;
+        }
+
+        .btn-secondary:hover { background: #3b3c4a; }
+
+        .progress-section {
+            display: none;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background: #12131a;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 8px;
+            margin: 12px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 8px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .eta-text {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .quality-warnings {
+            margin-top: 12px;
+            padding: 12px;
+            background: #1a1520;
+            border: 1px solid #f59e0b33;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #fbbf24;
+        }
+
+        .licence-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .licence-table th,
+        .licence-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #2d2e3a;
+        }
+
+        .licence-table th { color: #9ca3af; font-weight: 600; }
+
+        .warning-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f59e0b22;
+            color: #fbbf24;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .ok-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #22c55e22;
+            color: #4ade80;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .comparison-container {
+            position: relative;
+            display: none;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-top: 16px;
+            cursor: col-resize;
+            user-select: none;
+        }
+
+        .comparison-container img {
+            display: block;
+            width: 100%;
+        }
+
+        .comparison-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .comparison-overlay img {
+            display: block;
+            width: 200%;
+            max-width: none;
+        }
+
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 3px;
+            height: 100%;
+            background: #fff;
+            cursor: col-resize;
+            z-index: 10;
+        }
+
+        .comparison-label {
+            position: absolute;
+            top: 8px;
+            padding: 4px 10px;
+            background: #000a;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            z-index: 11;
+        }
+
+        .comparison-label.before { left: 8px; }
+        .comparison-label.after { right: 8px; }
+
+        .advanced-toggle {
+            color: #6366f1;
+            cursor: pointer;
+            font-size: 14px;
+            user-select: none;
+            margin-bottom: 14px;
+        }
+
+        .advanced-options {
+            display: none;
+        }
+
+        .error-text {
+            color: #f87171;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Watermark Remover</h1>
+        <p class="subtitle">Remove watermarks and logos from images and videos you own or have permission to edit.</p>
+
+        <div class="card">
+            <h2>Upload File</h2>
+            <div class="form-group">
+                <input type="file" id="fileInput" accept="image/*,video/*">
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group required">
+                    <input type="checkbox" id="rightsConfirm">
+                    <span>I confirm that I own this file or have written permission from the rights holder to edit it. I understand that removing watermarks from content I do not own may violate copyright law.</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Detection Method</label>
+                <select id="detectionMethod">
+                    <option value="text">Text prompt (auto-detect)</option>
+                    <option value="box">Draw bounding box</option>
+                    <option value="point">Click on watermark</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="textPromptGroup">
+                <label>Text Prompt</label>
+                <input type="text" id="textPrompt" value="watermark" placeholder="e.g. watermark, logo, badge">
+            </div>
+
+            <div class="form-group" id="boxGroup" style="display:none">
+                <label>Bounding Box (x1, y1, x2, y2)</label>
+                <div class="row">
+                    <input type="number" id="boxX1" placeholder="x1">
+                    <input type="number" id="boxY1" placeholder="y1">
+                </div>
+                <div class="row" style="margin-top:8px">
+                    <input type="number" id="boxX2" placeholder="x2">
+                    <input type="number" id="boxY2" placeholder="y2">
+                </div>
+            </div>
+
+            <div class="form-group" id="pointGroup" style="display:none">
+                <label>Click Point (x, y)</label>
+                <div class="row">
+                    <input type="number" id="pointX" placeholder="x">
+                    <input type="number" id="pointY" placeholder="y">
+                </div>
+            </div>
+
+            <div class="advanced-toggle" onclick="toggleAdvanced()">Advanced Options &#9660;</div>
+            <div class="advanced-options" id="advancedOptions">
+                <div class="row-3">
+                    <div class="form-group">
+                        <label>Mask Dilation (px)</label>
+                        <input type="number" id="dilatePx" value="6" min="0" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Feather Edge (px)</label>
+                        <input type="number" id="featherPx" value="3" min="0" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label>CRF (video)</label>
+                        <input type="number" id="crf" value="17" min="0" max="51">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="exportMask">
+                        <span>Export detected mask for review</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="processBtn" onclick="startProcessing()" disabled>
+                Process File
+            </button>
+            <div class="error-text" id="errorText"></div>
+        </div>
+
+        <div class="card progress-section" id="progressSection">
+            <h2>Processing</h2>
+            <div class="status-text" id="statusText">Starting...</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="eta-text" id="etaText"></div>
+        </div>
+
+        <div class="card result-section" id="resultSection">
+            <h2>Result</h2>
+            <div class="status-text" id="resultStatus"></div>
+            <div class="quality-warnings" id="qualityWarnings" style="display:none"></div>
+            <div class="comparison-container" id="comparisonContainer">
+                <img id="afterImg" alt="After">
+                <div class="comparison-overlay" id="comparisonOverlay">
+                    <img id="beforeImg" alt="Before">
+                </div>
+                <div class="comparison-slider" id="comparisonSlider"></div>
+                <div class="comparison-label before">Before</div>
+                <div class="comparison-label after">After</div>
+            </div>
+            <div class="result-actions">
+                <button class="btn btn-primary" id="downloadBtn" onclick="downloadResult()">
+                    Download Result
+                </button>
+                <button class="btn btn-secondary" id="maskBtn" onclick="downloadMask()" style="display:none">
+                    Download Mask
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Model Licences</h2>
+            <p style="font-size:13px;color:#9ca3af;margin-bottom:8px;">Models used in the processing pipeline and their licence status.</p>
+            <table class="licence-table" id="licenceTable">
+                <thead>
+                    <tr><th>Model</th><th>Licence</th><th>Commercial Use</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentJobId = null;
+        let pollInterval = null;
+
+        const detectionMethod = document.getElementById('detectionMethod');
+        const fileInput = document.getElementById('fileInput');
+        const rightsConfirm = document.getElementById('rightsConfirm');
+        const processBtn = document.getElementById('processBtn');
+
+        function updateButtonState() {
+            processBtn.disabled = !(fileInput.files.length > 0 && rightsConfirm.checked);
+        }
+
+        fileInput.addEventListener('change', updateButtonState);
+        rightsConfirm.addEventListener('change', updateButtonState);
+
+        detectionMethod.addEventListener('change', function() {
+            document.getElementById('textPromptGroup').style.display = this.value === 'text' ? 'block' : 'none';
+            document.getElementById('boxGroup').style.display = this.value === 'box' ? 'block' : 'none';
+            document.getElementById('pointGroup').style.display = this.value === 'point' ? 'block' : 'none';
+        });
+
+        function toggleAdvanced() {
+            const opts = document.getElementById('advancedOptions');
+            opts.style.display = opts.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function startProcessing() {
+            const file = fileInput.files[0];
+            if (!file || !rightsConfirm.checked) return;
+
+            document.getElementById('errorText').textContent = '';
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            processBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('rights_confirmed', 'true');
+            formData.append('detection_method', detectionMethod.value);
+            formData.append('text_prompt', document.getElementById('textPrompt').value);
+            formData.append('dilate_px', document.getElementById('dilatePx').value);
+            formData.append('feather_px', document.getElementById('featherPx').value);
+            formData.append('crf', document.getElementById('crf').value);
+            formData.append('export_mask', document.getElementById('exportMask').checked);
+
+            if (detectionMethod.value === 'box') {
+                formData.append('box_x1', document.getElementById('boxX1').value);
+                formData.append('box_y1', document.getElementById('boxY1').value);
+                formData.append('box_x2', document.getElementById('boxX2').value);
+                formData.append('box_y2', document.getElementById('boxY2').value);
+            }
+
+            if (detectionMethod.value === 'point') {
+                formData.append('point_x', document.getElementById('pointX').value);
+                formData.append('point_y', document.getElementById('pointY').value);
+            }
+
+            try {
+                const response = await fetch('/api/process', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Upload failed');
+                }
+
+                currentJobId = data.job_id;
+                pollInterval = setInterval(pollStatus, 1500);
+            } catch (err) {
+                document.getElementById('errorText').textContent = err.message;
+                document.getElementById('progressSection').style.display = 'none';
+                processBtn.disabled = false;
+            }
+        }
+
+        async function pollStatus() {
+            if (!currentJobId) return;
+
+            try {
+                const response = await fetch(`/api/jobs/${currentJobId}`);
+                const data = await response.json();
+
+                document.getElementById('statusText').textContent = data.message || data.status;
+                document.getElementById('progressBar').style.width = (data.progress * 100) + '%';
+
+                if (data.eta_seconds > 0) {
+                    const mins = Math.floor(data.eta_seconds / 60);
+                    const secs = Math.floor(data.eta_seconds % 60);
+                    document.getElementById('etaText').textContent =
+                        `Estimated time remaining: ${mins}m ${secs}s`;
+                }
+
+                if (data.status === 'done') {
+                    clearInterval(pollInterval);
+                    showResult(data);
+                } else if (data.status === 'failed') {
+                    clearInterval(pollInterval);
+                    document.getElementById('errorText').textContent = data.error || 'Processing failed';
+                    document.getElementById('progressSection').style.display = 'none';
+                    processBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error('Poll error:', err);
+            }
+        }
+
+        function showResult(data) {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('resultStatus').textContent = data.message;
+
+            if (data.quality_issues && data.quality_issues.length > 0) {
+                const warningsDiv = document.getElementById('qualityWarnings');
+                warningsDiv.style.display = 'block';
+                warningsDiv.innerHTML = '<strong>Quality warnings:</strong><br>' +
+                    data.quality_issues.map(q =>
+                        `Frame ${q.frame} (${q.timestamp}): edge diff ${q.mean_diff.toFixed(1)}`
+                    ).join('<br>');
+            }
+
+            if (data.mask_path) {
+                document.getElementById('maskBtn').style.display = 'inline-flex';
+            }
+
+            processBtn.disabled = false;
+        }
+
+        function downloadResult() {
+            if (currentJobId) {
+                window.location.href = `/api/jobs/${currentJobId}/download`;
+            }
+        }
+
+        function downloadMask() {
+            if (currentJobId) {
+                window.location.href = `/api/jobs/${currentJobId}/mask`;
+            }
+        }
+
+        // Comparison slider
+        const container = document.getElementById('comparisonContainer');
+        const slider = document.getElementById('comparisonSlider');
+        const overlay = document.getElementById('comparisonOverlay');
+        let isDragging = false;
+
+        function moveSlider(x) {
+            const rect = container.getBoundingClientRect();
+            let pos = (x - rect.left) / rect.width;
+            pos = Math.max(0, Math.min(1, pos));
+            slider.style.left = (pos * 100) + '%';
+            overlay.style.width = (pos * 100) + '%';
+        }
+
+        container.addEventListener('mousedown', (e) => { isDragging = true; moveSlider(e.clientX); });
+        document.addEventListener('mousemove', (e) => { if (isDragging) moveSlider(e.clientX); });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        container.addEventListener('touchstart', (e) => { isDragging = true; moveSlider(e.touches[0].clientX); });
+        document.addEventListener('touchmove', (e) => { if (isDragging) moveSlider(e.touches[0].clientX); });
+        document.addEventListener('touchend', () => { isDragging = false; });
+
+        // Load licence table
+        async function loadLicences() {
+            try {
+                const response = await fetch('/api/licences');
+                const data = await response.json();
+                const tbody = document.querySelector('#licenceTable tbody');
+                tbody.innerHTML = data.map(row => `
+                    <tr>
+                        <td><a href="${row.url}" target="_blank" style="color:#818cf8">${row.model}</a></td>
+                        <td>${row.licence}</td>
+                        <td>${row.commercial_use_allowed
+                            ? '<span class="ok-badge">Allowed</span>'
+                            : '<span class="warning-badge">Not Allowed</span>'
+                        }</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load licences:', err);
+            }
+        }
+
+        loadLicences();
+    </script>
+</body>
+</html>
